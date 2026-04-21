@@ -1,6 +1,7 @@
-/* The Cloudflare Worker runs on the same domain as this site.
-   POST requests to /openai are handled server-side, keeping the API key secret. */
-const WORKER_URL = "/openai";
+/* Direct OpenAI API call for GitHub Pages (no server-side proxy available) */
+const WORKER_URL = "https://api.openai.com/v1/chat/completions";
+const OPENAI_API_KEY =
+  "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";
 
 /* Get references to DOM elements */
 const categoryFilter = document.getElementById("categoryFilter");
@@ -216,6 +217,7 @@ document
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: "gpt-4o",
