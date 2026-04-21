@@ -35,7 +35,7 @@ export async function onRequestPost(context) {
       headers: {
         "Content-Type": "application/json",
         /* context.env holds the environment variables set in the Pages dashboard */
-        Authorization: `Bearer ${context.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${context.env.projectroutine}`,
       },
       body: JSON.stringify(body),
     },

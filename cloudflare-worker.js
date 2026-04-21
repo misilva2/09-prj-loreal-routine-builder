@@ -49,7 +49,7 @@ export default {
         headers: {
           "Content-Type": "application/json",
           /* The API key is stored as a Worker secret, never visible to the browser */
-          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${env.projectroutine}`,
         },
         body: JSON.stringify(body),
       },
