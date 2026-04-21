@@ -9,8 +9,18 @@ const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
 const selectedProductsList = document.getElementById("selectedProductsList");
 
-/* Track which product IDs the user has selected */
-const selectedProducts = new Set();
+/* Track which product IDs the user has selected.
+   Load any previously saved IDs from localStorage so selections survive page reloads. */
+const savedIds = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+const selectedProducts = new Set(savedIds);
+
+/* Save the current selections to localStorage so they persist across reloads */
+function saveSelections() {
+  localStorage.setItem(
+    "selectedProducts",
+    JSON.stringify([...selectedProducts]),
+  );
+}
 
 /* Store ALL products once so selections persist across category changes */
 let allProducts = [];
@@ -29,9 +39,11 @@ async function loadProducts() {
   return data.products;
 }
 
-/* Load all products immediately so cross-category selections always work */
+/* Load all products immediately so cross-category selections always work.
+   Then show any previously saved selections right away. */
 loadProducts().then((products) => {
   allProducts = products;
+  updateSelectedList();
 });
 
 /* Create HTML for displaying product cards */
@@ -71,7 +83,8 @@ function displayProducts(products) {
         selectedProducts.add(id);
         card.classList.add("selected");
       }
-      /* updateSelectedList uses allProducts globally — no argument needed */
+      /* Save to localStorage and refresh the selected list */
+      saveSelections();
       updateSelectedList();
     });
 
@@ -113,6 +126,7 @@ function updateSelectedList() {
     btn.addEventListener("click", () => {
       const id = parseInt(btn.closest(".selected-tag").dataset.id);
       selectedProducts.delete(id);
+      saveSelections();
 
       /* Also un-highlight the card in the grid if it's visible */
       const card = productsContainer.querySelector(`[data-id="${id}"]`);
@@ -135,6 +149,21 @@ categoryFilter.addEventListener("change", (e) => {
   );
 
   displayProducts(filteredProducts);
+});
+
+/* Clear All button - removes all selected products and clears localStorage */
+document.getElementById("clearAll").addEventListener("click", () => {
+  selectedProducts.clear();
+  saveSelections();
+
+  /* Remove the selected highlight from any visible cards */
+  productsContainer
+    .querySelectorAll(".product-card.selected")
+    .forEach((card) => {
+      card.classList.remove("selected");
+    });
+
+  updateSelectedList();
 });
 
 /* Generate Routine button - builds a prompt from selected products and asks OpenAI */
