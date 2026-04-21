@@ -1,0 +1,12 @@
+# Wrangler configuration for the OpenAI proxy Worker
+# This tells Cloudflare which file is the Worker script so that
+# Variables & Secrets become available in the dashboard.
+
+name = "09-prj-loreal-routine-builder"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-01-01"
+
+# Serve the front-end static files (index.html, style.css, script.js, etc.)
+# from the same Worker so everything is on one domain.
+[assets]
+directory = "."
