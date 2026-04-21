@@ -1,6 +1,6 @@
-/* Cloudflare Worker URL — the worker securely adds the OpenAI API key server-side.
-   Replace this URL with your own deployed Worker URL. */
-const WORKER_URL = "https://09-prj-loreal-routine-builder.misilva2.workers.dev";
+/* The Cloudflare Pages Function is served from the same domain as the site.
+   /openai maps to functions/openai.js — it securely adds the API key server-side. */
+const WORKER_URL = "/openai";
 
 /* Get references to DOM elements */
 const categoryFilter = document.getElementById("categoryFilter");
