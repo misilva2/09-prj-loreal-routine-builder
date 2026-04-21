@@ -6,7 +6,8 @@ name = "09-prj-loreal-routine-builder"
 main = "cloudflare-worker.js"
 compatibility_date = "2024-01-01"
 
-# Serve the front-end static files (index.html, style.css, script.js, etc.)
-# from the same Worker so everything is on one domain.
+# Serve the front-end static files (index.html, style.css, script.js, img/, etc.)
+# binding = "ASSETS" makes it available as env.ASSETS inside the Worker script.
 [assets]
 directory = "."
+binding = "ASSETS"

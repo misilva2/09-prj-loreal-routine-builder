@@ -12,7 +12,7 @@ const selectedProductsList = document.getElementById("selectedProductsList");
 /* Track which product IDs the user has selected */
 const selectedProducts = new Set();
 
-/* Store all loaded products so the generate button can access them */
+/* Store ALL products once so selections persist across category changes */
 let allProducts = [];
 
 /* Show initial placeholder until user selects a category */
@@ -22,12 +22,17 @@ productsContainer.innerHTML = `
   </div>
 `;
 
-/* Load product data from JSON file */
+/* Load all product data from JSON once at startup */
 async function loadProducts() {
   const response = await fetch("products.json");
   const data = await response.json();
   return data.products;
 }
+
+/* Load all products immediately so cross-category selections always work */
+loadProducts().then((products) => {
+  allProducts = products;
+});
 
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
@@ -66,7 +71,8 @@ function displayProducts(products) {
         selectedProducts.add(id);
         card.classList.add("selected");
       }
-      updateSelectedList(products);
+      /* updateSelectedList uses allProducts globally — no argument needed */
+      updateSelectedList();
     });
 
     /* Toggle description visibility when Details button is clicked */
@@ -80,8 +86,9 @@ function displayProducts(products) {
   });
 }
 
-/* Update the Selected Products section */
-function updateSelectedList(products) {
+/* Update the Selected Products section.
+   Always uses allProducts (global) so selections from any category are found. */
+function updateSelectedList() {
   if (selectedProducts.size === 0) {
     selectedProductsList.innerHTML =
       "<p class='no-selection'>No products selected yet.</p>";
@@ -90,7 +97,8 @@ function updateSelectedList(products) {
 
   selectedProductsList.innerHTML = [...selectedProducts]
     .map((id) => {
-      const product = products.find((p) => p.id === id);
+      /* Look up the product from the full list, not just the current category */
+      const product = allProducts.find((p) => p.id === id);
       return `
       <div class="selected-tag" data-id="${product.id}">
         <img src="${product.image}" alt="${product.name}">
@@ -110,17 +118,17 @@ function updateSelectedList(products) {
       const card = productsContainer.querySelector(`[data-id="${id}"]`);
       if (card) card.classList.remove("selected");
 
-      updateSelectedList(products);
+      updateSelectedList();
     });
   });
 }
 
-/* Filter and display products when category changes */
-categoryFilter.addEventListener("change", async (e) => {
-  allProducts = await loadProducts();
+/* Filter and display products when category changes.
+   Uses the already-loaded allProducts so cross-category selections are kept. */
+categoryFilter.addEventListener("change", (e) => {
   const selectedCategory = e.target.value;
 
-  /* filter() creates a new array containing only products 
+  /* filter() creates a new array containing only products
      where the category matches what the user selected */
   const filteredProducts = allProducts.filter(
     (product) => product.category === selectedCategory,
@@ -152,25 +160,36 @@ document
 
     /* Send the selected products to the Cloudflare Worker, which forwards to OpenAI.
        The API key is kept secret inside the Worker — never exposed in the browser. */
-    const response = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: `I have selected the following L'Oréal products:\n${productDetails}\n\nPlease create a personalized skincare or beauty routine using these products. Include the order of application and any tips for best results.`,
-          },
-        ],
-      }),
-    });
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "user",
+              content: `I have selected the following L'Oréal products:\n${productDetails}\n\nPlease create a personalized skincare or beauty routine using these products. Include the order of application and any tips for best results.`,
+            },
+          ],
+        }),
+      });
 
-    /* Display the generated routine in the chat window */
-    const data = await response.json();
-    chatWindow.innerHTML = data.choices[0].message.content;
+      /* Display the generated routine in the chat window */
+      const data = await response.json();
+
+      /* Check for an error returned by the API */
+      if (data.error) {
+        chatWindow.innerHTML = `Failed to load: ${data.error.message}`;
+      } else {
+        chatWindow.innerHTML = data.choices[0].message.content;
+      }
+    } catch (error) {
+      /* Show a friendly message if the request fails entirely */
+      chatWindow.innerHTML = "Failed to load: Could not reach the AI service. Please try again.";
+    }
   });
 
 /* Chat form submission handler - sends user message to OpenAI */
@@ -182,18 +201,29 @@ chatForm.addEventListener("submit", async (e) => {
 
   /* Send the message to the Cloudflare Worker, which forwards it to OpenAI.
      The API key is kept secret inside the Worker — never exposed in the browser. */
-  const response = await fetch(WORKER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: userMessage }],
-    }),
-  });
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: userMessage }],
+      }),
+    });
 
-  /* Parse the response and display the assistant's reply */
-  const data = await response.json();
-  chatWindow.innerHTML = data.choices[0].message.content;
+    /* Parse the response and display the assistant's reply */
+    const data = await response.json();
+
+    /* Check for an error returned by the API */
+    if (data.error) {
+      chatWindow.innerHTML = `Failed to load: ${data.error.message}`;
+    } else {
+      chatWindow.innerHTML = data.choices[0].message.content;
+    }
+  } catch (error) {
+    /* Show a friendly message if the request fails entirely */
+    chatWindow.innerHTML = "Failed to load: Could not reach the AI service. Please try again.";
+  }
 });
