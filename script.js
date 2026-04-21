@@ -1,5 +1,6 @@
-/* Add your OpenAI API key here */
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY";
+/* Cloudflare Worker URL — the worker securely adds the OpenAI API key server-side.
+   Replace this URL with your own deployed Worker URL. */
+const WORKER_URL = "https://09-prj-loreal-routine-builder.misilva2.workers.dev";
 
 /* Get references to DOM elements */
 const categoryFilter = document.getElementById("categoryFilter");
@@ -149,12 +150,12 @@ document
     /* Tell the user we're working on it */
     chatWindow.innerHTML = "Building your routine…";
 
-    /* Send the selected products to OpenAI and ask for a routine */
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    /* Send the selected products to the Cloudflare Worker, which forwards to OpenAI.
+       The API key is kept secret inside the Worker — never exposed in the browser. */
+    const response = await fetch(WORKER_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-4o",
@@ -179,12 +180,12 @@ chatForm.addEventListener("submit", async (e) => {
   /* Get the user's message from the input field */
   const userMessage = document.getElementById("userInput").value;
 
-  /* Send the message to the OpenAI API */
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  /* Send the message to the Cloudflare Worker, which forwards it to OpenAI.
+     The API key is kept secret inside the Worker — never exposed in the browser. */
+  const response = await fetch(WORKER_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
       model: "gpt-4o",
