@@ -1,5 +1,5 @@
-/* The Cloudflare Pages Function is served from the same domain as the site.
-   /openai maps to functions/openai.js — it securely adds the API key server-side. */
+/* The Cloudflare Worker runs on the same domain as this site.
+   POST requests to /openai are handled server-side, keeping the API key secret. */
 const WORKER_URL = "/openai";
 
 /* Get references to DOM elements */

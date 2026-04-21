@@ -10,8 +10,15 @@
 */
 
 export default {
-  async fetch(request, env) {
-    /* Allow requests from any origin (update this to your domain in production) */
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    /* Route /openai POST requests to the OpenAI proxy logic.
+       All other requests are served as static assets by Cloudflare. */
+    if (url.pathname !== "/openai") {
+      return env.ASSETS.fetch(request);
+    }
+
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -23,7 +30,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    /* Only allow POST requests */
+    /* Only allow POST requests to this route */
     if (request.method !== "POST") {
       return new Response("Method not allowed", {
         status: 405,
