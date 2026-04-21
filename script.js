@@ -188,7 +188,8 @@ document
       }
     } catch (error) {
       /* Show a friendly message if the request fails entirely */
-      chatWindow.innerHTML = "Failed to load: Could not reach the AI service. Please try again.";
+      chatWindow.innerHTML =
+        "Failed to load: Could not reach the AI service. Please try again.";
     }
   });
 
@@ -224,6 +225,7 @@ chatForm.addEventListener("submit", async (e) => {
     }
   } catch (error) {
     /* Show a friendly message if the request fails entirely */
-    chatWindow.innerHTML = "Failed to load: Could not reach the AI service. Please try again.";
+    chatWindow.innerHTML =
+      "Failed to load: Could not reach the AI service. Please try again.";
   }
 });
