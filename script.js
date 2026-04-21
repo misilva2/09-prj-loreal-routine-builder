@@ -4,6 +4,7 @@ const WORKER_URL = "/openai";
 
 /* Get references to DOM elements */
 const categoryFilter = document.getElementById("categoryFilter");
+const searchInput = document.getElementById("searchInput");
 const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
@@ -137,19 +138,40 @@ function updateSelectedList() {
   });
 }
 
+/* Apply both category and search filters together and update the grid */
+function applyFilters() {
+  const selectedCategory = categoryFilter.value;
+  const query = searchInput.value.trim().toLowerCase();
+
+  /* Start with all products, then narrow down by category and/or search */
+  let filtered = allProducts;
+
+  if (selectedCategory) {
+    filtered = filtered.filter((p) => p.category === selectedCategory);
+  }
+
+  if (query) {
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query),
+    );
+  }
+
+  /* Show a message if no products match, otherwise display the grid */
+  if (filtered.length === 0) {
+    productsContainer.innerHTML = `<div class="placeholder-message">No products match your search.</div>`;
+  } else {
+    displayProducts(filtered);
+  }
+}
+
 /* Filter and display products when category changes.
    Uses the already-loaded allProducts so cross-category selections are kept. */
-categoryFilter.addEventListener("change", (e) => {
-  const selectedCategory = e.target.value;
+categoryFilter.addEventListener("change", applyFilters);
 
-  /* filter() creates a new array containing only products
-     where the category matches what the user selected */
-  const filteredProducts = allProducts.filter(
-    (product) => product.category === selectedCategory,
-  );
-
-  displayProducts(filteredProducts);
-});
+/* Also filter as the user types in the search box */
+searchInput.addEventListener("input", applyFilters);
 
 /* Clear All button - removes all selected products and clears localStorage */
 document.getElementById("clearAll").addEventListener("click", () => {
